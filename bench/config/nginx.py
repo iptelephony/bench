@@ -3,6 +3,7 @@ import hashlib
 import os
 import random
 import string
+import socket
 
 # imports - third party imports
 import click
@@ -44,6 +45,7 @@ def make_nginx_conf(bench_path, yes=False, logging=None, log_format=None):
 		"allow_rate_limiting": allow_rate_limiting,
 		# for nginx map variable
 		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7)),
+        "ipv6_enabled": _is_ipv6_enabled()
 	}
 
 	if logging and logging != "none":
@@ -300,3 +302,19 @@ def get_limit_conn_shared_memory():
 	)  # in MB
 
 	return int(0.02 * total_vm)
+
+
+def _is_ipv6_enabled():
+    """Check whether IPv6 is enabled on this host."""
+    if socket.has_ipv6:
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.bind((HOSTv6, 0))
+            return True
+        except OSError:
+            pass
+        finally:
+            if sock:
+                sock.close()
+    return False
